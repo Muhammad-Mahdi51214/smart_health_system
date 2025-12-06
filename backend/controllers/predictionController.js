@@ -5,19 +5,11 @@ const auditLogger = require('../middleware/auditLogger.js');
 // Helper function to classify severity
 function classifySeverity(disease, confidence) {
   if (disease === 'diabetes') {
-    if (confidence >= 0.75) return { level: 'Urgent', emergency: true };
-    if (confidence >= 0.50) return { level: 'Moderate Risk', emergency: false };
+    if (confidence >= 0.75) return { level: 'Critical', emergency: true };
+    if (confidence >= 0.50) return { level: 'Urgent', emergency: false };
     return { level: 'Mild', emergency: false };
   } else if (disease === 'heart_disease') {
     if (confidence >= 0.70) return { level: 'Critical', emergency: true };
-    if (confidence >= 0.50) return { level: 'Urgent', emergency: true };
-    return { level: 'Mild', emergency: false };
-  } else if (disease === 'dengue') {
-    if (confidence >= 0.70) return { level: 'Urgent', emergency: true };
-    if (confidence >= 0.50) return { level: 'Moderate Risk', emergency: false };
-    return { level: 'Mild', emergency: false };
-  } else if (disease === 'breast_cancer') {
-    if (confidence >= 0.75) return { level: 'Critical', emergency: true };
     if (confidence >= 0.50) return { level: 'Urgent', emergency: true };
     return { level: 'Mild', emergency: false };
   }
@@ -113,31 +105,28 @@ exports.predictDiabetes = async (req, res) => {
         // Find nearest hospitals if critical/urgent
         let nearbyHospitals = [];
         if (severity.emergency) {
-          const [user] = await db.execute('SELECT latitude, longitude FROM users WHERE user_id = ?', [userId]);
-          
-          if (user.length > 0 && user[0].latitude && user[0].longitude) {
+          try {
             const hospitalQuery = `
-              SELECT *, 
-              (6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance
+              SELECT *
               FROM hospitals
-              WHERE (specialties LIKE '%Endocrinology%' OR specialties LIKE '%Diabetes%') AND is_active = 1
-              ORDER BY distance
+              WHERE (specialties LIKE '%Endocrinology%' OR specialties LIKE '%Diabetes%') AND is_active = 1 AND emergency_services = 1
               LIMIT 5
             `;
             
-            const [hospitals] = await db.execute(hospitalQuery, [
-              user[0].latitude, user[0].longitude, user[0].latitude
-            ]);
+            const [hospitals] = await db.execute(hospitalQuery);
             
             nearbyHospitals = hospitals;
             
             // Update recommended hospital
             if (hospitals.length > 0) {
               await db.execute(
-                'UPDATE predictions SET recommended_hospital_id = ?, distance_to_hospital = ? WHERE prediction_id = ?',
-                [hospitals[0].hospital_id, hospitals[0].distance, predictionId]
+                'UPDATE predictions SET recommended_hospital_id = ? WHERE prediction_id = ?',
+                [hospitals[0].hospital_id, predictionId]
               );
             }
+          } catch (err) {
+            console.log('Hospital search unavailable:', err.message);
+            nearbyHospitals = [];
           }
         }
         
@@ -236,19 +225,18 @@ exports.predictHeart = async (req, res) => {
       // Find nearest hospitals
       let nearbyHospitals = [];
       if (severity.emergency) {
-        const [user] = await db.execute('SELECT latitude, longitude FROM users WHERE user_id = ?', [userId]);
-        
-        if (user.length > 0 && user[0].latitude && user[0].longitude) {
+        try {
           const [hospitals] = await db.execute(`
-            SELECT *, 
-            (6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance
+            SELECT *
             FROM hospitals
-            WHERE specialties LIKE '%Cardiology%' AND is_active = 1
-            ORDER BY distance
+            WHERE specialties LIKE '%Cardiology%' AND is_active = 1 AND emergency_services = 1
             LIMIT 5
-          `, [user[0].latitude, user[0].longitude, user[0].latitude]);
+          `);
           
           nearbyHospitals = hospitals;
+        } catch (err) {
+          console.log('Hospital search unavailable:', err.message);
+          nearbyHospitals = [];
         }
       }
       

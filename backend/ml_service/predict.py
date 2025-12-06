@@ -8,9 +8,9 @@ def classify_severity(disease, confidence):
     """Classify severity based on disease type and confidence"""
     if disease == 'diabetes':
         if confidence >= 0.75:
-            return 'Urgent', True
+            return 'Critical', True
         elif confidence >= 0.50:
-            return 'Moderate Risk', False
+            return 'Urgent', False
         else:
             return 'Mild', False
     elif disease == 'heart':
@@ -22,9 +22,9 @@ def classify_severity(disease, confidence):
             return 'Mild', False
     elif disease == 'dengue':
         if confidence >= 0.70:
-            return 'Urgent', True
+            return 'Critical', True
         elif confidence >= 0.50:
-            return 'Moderate Risk', False
+            return 'Urgent', False
         else:
             return 'Mild', False
     elif disease == 'breast_cancer':
