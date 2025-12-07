@@ -62,7 +62,7 @@ function UserManagement() {
   return (
     <div className="admin-section">
       <h2>User Management</h2>
-      <p>Total Users: {users.length}</p>
+      <p>Total Users:{users.length}</p>
       
       <div className="table-container">
         <table className="admin-table">
