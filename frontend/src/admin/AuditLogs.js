@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 function AuditLogs() {
@@ -10,11 +10,8 @@ function AuditLogs() {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchLogs();
-  }, [filters]);
-
-  const fetchLogs = async () => {
+  // ✅ Memoize fetchLogs so it is stable
+  const fetchLogs = useCallback(async () => {
     try {
       const token = localStorage.getItem('adminToken');
       const queryParams = new URLSearchParams(filters).toString();
@@ -29,7 +26,11 @@ function AuditLogs() {
       console.error('Failed to fetch audit logs:', error);
       setLoading(false);
     }
-  };
+  }, [filters]); // ✅ include filters as dependency
+
+  useEffect(() => {
+    fetchLogs();
+  }, [fetchLogs]); // ✅ fetchLogs is stable now
 
   if (loading) {
     return <div className="loading">Loading audit logs...</div>;
