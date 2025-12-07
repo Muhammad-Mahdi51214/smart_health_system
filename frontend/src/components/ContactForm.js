@@ -112,7 +112,7 @@ function ContactForm() {
             disabled={loading}
             style={{ position: 'relative', zIndex: 1 }}
           >
-            {loading ? '🔄 Sending...' : '✨ Send Message'}
+            {loading ? 'Sending...' : ' Send Message'}
           </button>
         </form>
       </div>
