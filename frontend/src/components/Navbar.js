@@ -25,7 +25,7 @@ function Navbar() {
               <Link to="/predict" className="nav-link"> Predictions</Link>
               <Link to="/contact" className="nav-link">Contact</Link>
               <Link to="/map" className="nav-link"> Map</Link>
-              <Link to="/profile"><span className="nav-link">👤 {user.username}</span></Link>
+              <Link to="/profile" className="nav-link"><span >👤 {user.username}</span></Link>
               <button onClick={handleLogout} className="btn btn-secondary" style={{ position: 'relative', zIndex: 1 }}>
                 🚪 Logout
               </button>
